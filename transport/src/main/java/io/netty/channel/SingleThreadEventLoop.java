@@ -136,11 +136,6 @@ public abstract class SingleThreadEventLoop extends SingleThreadEventExecutor im
     }
 
     @Override
-    protected boolean wakesUpForTask(Runnable task) {
-        return !(task instanceof NonWakeupRunnable);
-    }
-
-    @Override
     protected void afterRunningAllTasks() {
         runAllTasksFrom(tailTasks);
     }
@@ -168,5 +163,5 @@ public abstract class SingleThreadEventLoop extends SingleThreadEventExecutor im
     /**
      * Marker interface for {@link Runnable} that will not trigger an {@link #wakeup(boolean)} in all cases.
      */
-    interface NonWakeupRunnable extends Runnable { }
+    interface NonWakeupRunnable extends SingleThreadEventExecutor.NonWakeupRunnable { }
 }

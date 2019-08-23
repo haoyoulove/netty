@@ -124,6 +124,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
      * waken up.
      */
     private final AtomicBoolean wakenUp = new AtomicBoolean();
+    private volatile long nextWakeupTime = Long.MAX_VALUE;
 
     private final SelectStrategy selectStrategy;
 
@@ -344,8 +345,10 @@ public final class NioEventLoop extends SingleThreadEventLoop {
     }
 
     /**
-     * Sets the percentage of the desired amount of time spent for I/O in the event loop.  The default value is
-     * {@code 50}, which means the event loop will try to spend the same amount of time for I/O as for non-I/O tasks.
+     * Sets the percentage of the desired amount of time spent for I/O in the event loop. Value range from 1-100.
+     * The default value is {@code 50}, which means the event loop will try to spend the same amount of time for I/O
+     * as for non-I/O tasks. The lower the number the more time can be spent on non-I/O tasks. If value set to
+     * {@code 100}, this feature will be disabled and event loop will not attempt to balance I/O and non-I/O tasks.
      */
     public void setIoRatio(int ioRatio) {
         if (ioRatio <= 0 || ioRatio > 100) {
@@ -761,6 +764,16 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         }
     }
 
+    @Override
+    protected boolean beforeScheduledTaskSubmitted(long deadlineNanos) {
+        return deadlineNanos < nextWakeupTime;
+    }
+
+    @Override
+    protected boolean afterScheduledTaskSubmitted(long deadlineNanos) {
+        return deadlineNanos < nextWakeupTime;
+    }
+
     Selector unwrappedSelector() {
         return unwrappedSelector;
     }
@@ -782,6 +795,11 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             int selectCnt = 0;
             long currentTimeNanos = System.nanoTime();
             long selectDeadLineNanos = currentTimeNanos + delayNanos(currentTimeNanos);
+
+            long normalizedDeadlineNanos = selectDeadLineNanos - initialNanoTime();
+            if (nextWakeupTime != normalizedDeadlineNanos) {
+                nextWakeupTime = normalizedDeadlineNanos;
+            }
 
             for (;;) {
                 long timeoutMillis = (selectDeadLineNanos - currentTimeNanos + 500000L) / 1000000L;
