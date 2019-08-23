@@ -121,6 +121,16 @@ public class Http2FrameCodecBuilder extends
     }
 
     @Override
+    public int encoderEnforceMaxQueuedControlFrames() {
+        return super.encoderEnforceMaxQueuedControlFrames();
+    }
+
+    @Override
+    public Http2FrameCodecBuilder encoderEnforceMaxQueuedControlFrames(int maxQueuedControlFrames) {
+        return super.encoderEnforceMaxQueuedControlFrames(maxQueuedControlFrames);
+    }
+
+    @Override
     public Http2HeadersEncoder.SensitivityDetector headerSensitivityDetector() {
         return super.headerSensitivityDetector();
     }
@@ -157,6 +167,16 @@ public class Http2FrameCodecBuilder extends
         return super.decoupleCloseAndGoAway(decoupleCloseAndGoAway);
     }
 
+    @Override
+    public int decoderEnforceMaxConsecutiveEmptyDataFrames() {
+        return super.decoderEnforceMaxConsecutiveEmptyDataFrames();
+    }
+
+    @Override
+    public Http2FrameCodecBuilder decoderEnforceMaxConsecutiveEmptyDataFrames(int maxConsecutiveEmptyFrames) {
+        return super.decoderEnforceMaxConsecutiveEmptyDataFrames(maxConsecutiveEmptyFrames);
+    }
+
     /**
      * Build a {@link Http2FrameCodec} object.
      */
@@ -182,7 +202,10 @@ public class Http2FrameCodecBuilder extends
             }
             Http2ConnectionDecoder decoder = new DefaultHttp2ConnectionDecoder(connection, encoder, frameReader,
                     promisedRequestVerifier(), isAutoAckSettingsFrame(), isAutoAckPingFrame());
-
+            int maxConsecutiveEmptyDataFrames = decoderEnforceMaxConsecutiveEmptyDataFrames();
+            if (maxConsecutiveEmptyDataFrames > 0) {
+                decoder = new Http2EmptyDataFrameConnectionDecoder(decoder, maxConsecutiveEmptyDataFrames);
+            }
             return build(decoder, encoder, initialSettings());
         }
         return super.build();
