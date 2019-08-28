@@ -28,6 +28,8 @@ import java.util.Map;
 
 /**
  * Exposes the configuration of an {@link AbstractBootstrap}.
+ *
+ * bootstrap 属性，对应的启动类对象。都是直接调用 boostrap 属性对应的方法，读取对应的配置。
  */
 public abstract class AbstractBootstrapConfig<B extends AbstractBootstrap<B, C>, C extends Channel> {
 

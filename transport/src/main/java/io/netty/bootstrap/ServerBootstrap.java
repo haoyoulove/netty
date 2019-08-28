@@ -45,10 +45,25 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(ServerBootstrap.class);
 
+    /**
+     * 子 Channel 的可选项集合
+     */
     private final Map<ChannelOption<?>, Object> childOptions = new ConcurrentHashMap<ChannelOption<?>, Object>();
+    /**
+     * 子 Channel 的属性集合
+     */
     private final Map<AttributeKey<?>, Object> childAttrs = new ConcurrentHashMap<AttributeKey<?>, Object>();
+    /**
+     * 启动类配置对象
+     */
     private final ServerBootstrapConfig config = new ServerBootstrapConfig(this);
+    /**
+     * 子 Channel 的 EventLoopGroup 对象
+     */
     private volatile EventLoopGroup childGroup;
+    /**
+     * 子 Channel 的处理器
+     */
     private volatile ChannelHandler childHandler;
 
     public ServerBootstrap() { }
@@ -91,9 +106,9 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
      */
     public <T> ServerBootstrap childOption(ChannelOption<T> childOption, T value) {
         ObjectUtil.checkNotNull(childOption, "childOption");
-        if (value == null) {
+        if (value == null) {  // 空，意味着移除
             childOptions.remove(childOption);
-        } else {
+        } else {  // 非空，进行修改
             childOptions.put(childOption, value);
         }
         return this;
@@ -105,9 +120,9 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
      */
     public <T> ServerBootstrap childAttr(AttributeKey<T> childKey, T value) {
         ObjectUtil.checkNotNull(childKey, "childKey");
-        if (value == null) {
+        if (value == null) { // 空，意味着移除
             childAttrs.remove(childKey);
-        } else {
+        } else { // 非空，进行修改
             childAttrs.put(childKey, value);
         }
         return this;
@@ -115,34 +130,61 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
 
     /**
      * Set the {@link ChannelHandler} which is used to serve the request for the {@link Channel}'s.
+     * 设置子 Channel 的处理器
      */
     public ServerBootstrap childHandler(ChannelHandler childHandler) {
         this.childHandler = ObjectUtil.checkNotNull(childHandler, "childHandler");
         return this;
     }
 
+    /**
+     * 初始化Channel配置
+     * @param channel
+     */
     @Override
     void init(Channel channel) {
+        // 初始化 Channel 的可选项集合
         setChannelOptions(channel, options0().entrySet().toArray(newOptionArray(0)), logger);
+        // 初始化 Channel 的属性集合
         setAttributes(channel, attrs0().entrySet().toArray(newAttrArray(0)));
 
         ChannelPipeline p = channel.pipeline();
 
+        // 记录启动器配置的子 Channel的属性 用于下面创建 ServerBootstrapAcceptor 对象
         final EventLoopGroup currentChildGroup = childGroup;
         final ChannelHandler currentChildHandler = childHandler;
         final Entry<ChannelOption<?>, Object>[] currentChildOptions =
                 childOptions.entrySet().toArray(newOptionArray(0));
         final Entry<AttributeKey<?>, Object>[] currentChildAttrs = childAttrs.entrySet().toArray(newAttrArray(0));
 
+        // 添加 ChannelInitializer 对象到 pipeline 中，用于后续初始化 ChannelHandler 到 pipeline 中。
+        // 如果启动器配置的处理器，并且 ServerBootstrapAcceptor 不使用 EventLoop 添加，则会导致 ServerBootstrapAcceptor 添加到配置的处理器之前
+        // ServerBootstrapAcceptor 也是一个 ChannelHandler 实现类，用于接受客户端的连接请求
+        // 该 ChannelInitializer 的初始化的执行，在 AbstractChannel#register0(ChannelPromise promise) 方法中触发执行
+        /**
+         * 那么为什么要使用 ChannelInitializer 进行处理器的初始化呢？而不直接添加到 pipeline 中
+         * ch.eventLoop().execute(new Runnable() {
+         *     @Override
+         *     public void run() {
+         *         System.out.println(Thread.currentThread() + ": ServerBootstrapAcceptor");
+         *         pipeline.addLast(new ServerBootstrapAcceptor(
+         *                 ch, currentChildGroup, currentChildHandler, currentChildOptions, currentChildAttrs));
+         *     }
+         *     因为此时 Channel 并未注册到 EventLoop 中。如果调用 EventLoop#execute(Runnable runnable) 方法，
+         *     会抛出 Exception in thread "main" java.lang.IllegalStateException: channel not registered to an event loop 异常。
+         */
         p.addLast(new ChannelInitializer<Channel>() {
             @Override
             public void initChannel(final Channel ch) {
                 final ChannelPipeline pipeline = ch.pipeline();
+                // 添加配置的 ChannelHandler 到 pipeline 中。
                 ChannelHandler handler = config.handler();
                 if (handler != null) {
                     pipeline.addLast(handler);
                 }
 
+                // 添加 ServerBootstrapAcceptor 到 pipeline 中。
+                //使用 EventLoop 执行的原因
                 ch.eventLoop().execute(new Runnable() {
                     @Override
                     public void run() {
@@ -154,6 +196,10 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         });
     }
 
+    /**
+     * 校验配置是否正确
+     * @return
+     */
     @Override
     public ServerBootstrap validate() {
         super.validate();
@@ -240,6 +286,10 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         }
     }
 
+    /**
+     * 调用参数为 bootstrap 为 ServerBootstrap 构造方法，克隆一个 ServerBootstrap 对象
+     * @return
+     */
     @Override
     @SuppressWarnings("CloneDoesntCallSuperClone")
     public ServerBootstrap clone() {

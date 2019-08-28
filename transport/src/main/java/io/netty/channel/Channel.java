@@ -73,6 +73,8 @@ import java.net.SocketAddress;
  * It is important to call {@link #close()} or {@link #close(ChannelPromise)} to release all
  * resources once you are done with the {@link Channel}. This ensures all resources are
  * released in a proper way, i.e. filehandles.
+ *
+ * 类比JAVA原生的Socket  而 Netty NIO Channel 对应 Java 原生 NIO SocketChannel 对象
  */
 public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparable<Channel> {
 
@@ -205,6 +207,9 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
      *   <li>{@link #deregister(ChannelPromise)}</li>
      *   <li>{@link #voidPromise()}</li>
      * </ul>
+     *
+     * ，Unsafe 操作不允许被用户代码使用。这些函数是真正用于数据传输操作，必须被IO线程调用
+     * 实际上，Channel 真正的具体操作，通过调用对应的 Unsafe 实现
      */
     interface Unsafe {
 
@@ -262,6 +267,8 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
         /**
          * Closes the {@link Channel} immediately without firing any events.  Probably only useful
          * when registration attempt failed.
+         * 调用的前提，在于 Channel 是否注册到 EventLoopGroup 成功。😈因为注册失败，也不好触发相关的事件。
+         * 注册失败不用触发事件的时候使用
          */
         void closeForcibly();
 

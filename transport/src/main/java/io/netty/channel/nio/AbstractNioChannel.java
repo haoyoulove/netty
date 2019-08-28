@@ -44,13 +44,28 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Abstract base class for {@link Channel} implementations which use a Selector based approach.
+ *
+ *  * 对于一个 Netty NIO Channel 对象，它会包含如下几个核心组件：
+ *  *
+ *  * ChannelId
+ *  * Unsafe
+ *  * Pipeline
+ *  * ChannelHandler
+ *  * ChannelConfig
+ *  * Java 原生 NIO Channel
  */
 public abstract class AbstractNioChannel extends AbstractChannel {
 
     private static final InternalLogger logger =
             InternalLoggerFactory.getInstance(AbstractNioChannel.class);
-
+    /**
+     * Netty NIO Channel 对象 AbstractNioChannel ，持有的 Java 原生 NIO 的 Channel 对象。(SelectableChannel)
+     */
     private final SelectableChannel ch;
+
+    /**
+     * readInterestOp 属性，感兴趣的读事件的操作位值。
+     */
     protected final int readInterestOp;
     volatile SelectionKey selectionKey;
     boolean readPending;
@@ -81,6 +96,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         this.ch = ch;
         this.readInterestOp = readInterestOp;
         try {
+            // 设置 NIO Channel 为非阻塞
             ch.configureBlocking(false);
         } catch (IOException e) {
             try {
@@ -374,11 +390,19 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         return loop instanceof NioEventLoop;
     }
 
+    /**
+     * 注册方式是多态的，它既可以被 NIOServerSocketChannel 用来监听客户端的连接接入，也可以注册 SocketChannel 用来监听网络读或者写操作。
+     * 通过 SelectionKey#interestOps(int ops) 方法可以方便地修改监听操作位。
+     * 所以，此处注册需要获取 SelectionKey 并给 AbstractNIOChannel 的成员变量 selectionKey 赋值。
+     * @throws Exception
+     */
     @Override
     protected void doRegister() throws Exception {
         boolean selected = false;
         for (;;) {
             try {
+                // 调用 #unwrappedSelector() 方法，返回 Java 原生 NIO Selector 对象。
+                // ，注册 Java 原生 NIO 的 Channel 对象到 Selector 对象上
                 selectionKey = javaChannel().register(eventLoop().unwrappedSelector(), 0, this);
                 return;
             } catch (CancelledKeyException e) {
@@ -411,6 +435,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
 
         readPending = true;
 
+        // 将我们创建 NioServerSocketChannel 时，设置的 readInterestOp = SelectionKey.OP_ACCEPT 添加为感兴趣的事件
         final int interestOps = selectionKey.interestOps();
         if ((interestOps & readInterestOp) == 0) {
             selectionKey.interestOps(interestOps | readInterestOp);

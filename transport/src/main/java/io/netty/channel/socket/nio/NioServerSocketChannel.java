@@ -46,6 +46,10 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
                              implements io.netty.channel.socket.ServerSocketChannel {
 
     private static final ChannelMetadata METADATA = new ChannelMetadata(false, 16);
+
+    /**
+     * DEFAULT_SELECTOR_PROVIDER 静态属性，默认的 SelectorProvider 实现类。
+     */
     private static final SelectorProvider DEFAULT_SELECTOR_PROVIDER = SelectorProvider.provider();
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(NioServerSocketChannel.class);
@@ -57,6 +61,8 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
              *  {@link SelectorProvider#provider()} which is called by each ServerSocketChannel.open() otherwise.
              *
              *  See <a href="https://github.com/netty/netty/issues/2308">#2308</a>.
+             *  效果和ServerSocketChannel#open()一致
+             *  跟进代码去查看实现都一样
              */
             return provider.openServerSocketChannel();
         } catch (IOException e) {
@@ -65,6 +71,10 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
         }
     }
 
+    /**
+     * config 属性，Channel 对应的配置对象。每种 Channel 实现类，也会对应一个 ChannelConfig 实现类。
+     * ，NioServerSocketChannel 类，对应 ServerSocketChannelConfig 配置类。
+     */
     private final ServerSocketChannelConfig config;
 
     /**
@@ -86,6 +96,7 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
      */
     public NioServerSocketChannel(ServerSocketChannel channel) {
         super(null, channel, SelectionKey.OP_ACCEPT);
+        // 初始化 config 属性，创建 NioServerSocketChannelConfig 对象。
         config = new NioServerSocketChannelConfig(this, javaChannel().socket());
     }
 
@@ -126,6 +137,7 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
         return SocketUtils.localSocketAddress(javaChannel().socket());
     }
 
+    // 服务端的 Java 原生 NIO ServerSocketChannel 绑定端口
     @Override
     protected void doBind(SocketAddress localAddress) throws Exception {
         if (PlatformDependent.javaVersion() >= 7) {
