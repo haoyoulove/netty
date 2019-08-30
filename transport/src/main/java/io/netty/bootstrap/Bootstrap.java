@@ -49,13 +49,25 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(Bootstrap.class);
 
+    /**
+     * 默认地址解析器对象
+     */
     private static final AddressResolverGroup<?> DEFAULT_RESOLVER = DefaultAddressResolverGroup.INSTANCE;
 
+    /**
+     * 启动类配置对象
+     */
     private final BootstrapConfig config = new BootstrapConfig(this);
 
+    /**
+     * 地址解析器对象
+     */
     @SuppressWarnings("unchecked")
     private volatile AddressResolverGroup<SocketAddress> resolver =
             (AddressResolverGroup<SocketAddress>) DEFAULT_RESOLVER;
+    /**
+     * 地址解析器对象
+     */
     private volatile SocketAddress remoteAddress;
 
     public Bootstrap() { }
@@ -73,6 +85,7 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
      *                 resolver will be used
      *
      * @see io.netty.resolver.DefaultAddressResolverGroup
+     * 设置 resolver 属性
      */
     @SuppressWarnings("unchecked")
     public Bootstrap resolver(AddressResolverGroup<?> resolver) {
@@ -109,12 +122,13 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
      * Connect a {@link Channel} to the remote peer.
      */
     public ChannelFuture connect() {
+        // 校验必要参数
         validate();
         SocketAddress remoteAddress = this.remoteAddress;
         if (remoteAddress == null) {
             throw new IllegalStateException("remoteAddress not set");
         }
-
+        // 解析远程地址，并进行连接
         return doResolveAndConnect(remoteAddress, config.localAddress());
     }
 
@@ -137,6 +151,7 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
      */
     public ChannelFuture connect(SocketAddress remoteAddress) {
         ObjectUtil.checkNotNull(remoteAddress, "remoteAddress");
+        // 校验必要参数
         validate();
         return doResolveAndConnect(remoteAddress, config.localAddress());
     }
@@ -154,13 +169,16 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
      * @see #connect()
      */
     private ChannelFuture doResolveAndConnect(final SocketAddress remoteAddress, final SocketAddress localAddress) {
+        // 初始化并注册一个 Channel 对象，因为注册是异步的过程，所以返回一个 ChannelFuture 对象。
         final ChannelFuture regFuture = initAndRegister();
         final Channel channel = regFuture.channel();
 
         if (regFuture.isDone()) {
+            // 若执行失败，直接进行返回。
             if (!regFuture.isSuccess()) {
                 return regFuture;
             }
+            // 解析远程地址，并进行连接
             return doResolveAndConnect0(channel, remoteAddress, localAddress, channel.newPromise());
         } else {
             // Registration future is almost always fulfilled already, but just in case it's not.
@@ -179,6 +197,7 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
                         // Registration was successful, so set the correct executor to use.
                         // See https://github.com/netty/netty/issues/2586
                         promise.registered();
+                        // 解析远程地址，并进行连接
                         doResolveAndConnect0(channel, remoteAddress, localAddress, promise);
                     }
                 }
@@ -195,13 +214,16 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
 
             if (!resolver.isSupported(remoteAddress) || resolver.isResolved(remoteAddress)) {
                 // Resolver has no idea about what to do with the specified remote address or it's resolved already.
+                // 解析器不知道如何处理指定的远程地址，或者它已经解析。
                 doConnect(remoteAddress, localAddress, promise);
                 return promise;
             }
 
+            // 解析远程地址
             final Future<SocketAddress> resolveFuture = resolver.resolve(remoteAddress);
 
             if (resolveFuture.isDone()) {
+                // 解析远程地址失败，关闭 Channel ，并回调通知 promise 异常
                 final Throwable resolveFailureCause = resolveFuture.cause();
 
                 if (resolveFailureCause != null) {
@@ -210,6 +232,7 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
                     promise.setFailure(resolveFailureCause);
                 } else {
                     // Succeeded to resolve immediately; cached? (or did a blocking lookup)
+                    // 连接远程地址
                     doConnect(resolveFuture.getNow(), localAddress, promise);
                 }
                 return promise;
@@ -219,15 +242,18 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
             resolveFuture.addListener(new FutureListener<SocketAddress>() {
                 @Override
                 public void operationComplete(Future<SocketAddress> future) throws Exception {
+                    // 解析远程地址失败，关闭 Channel ，并回调通知 promise 异常
                     if (future.cause() != null) {
                         channel.close();
                         promise.setFailure(future.cause());
                     } else {
+                        // 解析远程地址成功，连接远程地址
                         doConnect(future.getNow(), localAddress, promise);
                     }
                 }
             });
         } catch (Throwable cause) {
+            // 发生异常，并回调通知 promise 异常
             promise.tryFailure(cause);
         }
         return promise;
@@ -236,8 +262,9 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
     private static void doConnect(
             final SocketAddress remoteAddress, final SocketAddress localAddress, final ChannelPromise connectPromise) {
 
-        // This method is invoked before channelRegistered() is triggered.  Give user handlers a chance to set up
-        // the pipeline in its channelRegistered() implementation.
+        // This method is invoked before channelRegistered() is triggered.
+        // Give user handlers a chance to set up the pipeline in its channelRegistered() implementation.
+        //在触发channelregister()之前调用此方法。让用户处理程序有机会在其channelRegistered()实现中设置管道。
         final Channel channel = connectPromise.channel();
         channel.eventLoop().execute(new Runnable() {
             @Override
@@ -255,13 +282,17 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
     @Override
     @SuppressWarnings("unchecked")
     void init(Channel channel) {
+        // 添加处理器到 pipeline 中
         ChannelPipeline p = channel.pipeline();
         p.addLast(config.handler());
 
+        // 初始化 Channel 的可选项集合
         setChannelOptions(channel, options0().entrySet().toArray(newOptionArray(0)), logger);
+        // 初始化 Channel 的属性集合
         setAttributes(channel, attrs0().entrySet().toArray(newAttrArray(0)));
     }
 
+    // 校验配置是否正确
     @Override
     public Bootstrap validate() {
         super.validate();

@@ -99,6 +99,7 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
      *
      * @param parent    the {@link Channel} which created this instance or {@code null} if it was created by the user
      * @param socket    the {@link SocketChannel} which will be used
+     * 初始化 config 属性，创建 NioSocketChannelConfig 对象。
      */
     public NioSocketChannel(Channel parent, SocketChannel socket) {
         super(parent, socket);
@@ -303,19 +304,25 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
 
     @Override
     protected boolean doConnect(SocketAddress remoteAddress, SocketAddress localAddress) throws Exception {
+        // 绑定本地地址
         if (localAddress != null) {
             doBind0(localAddress);
         }
 
-        boolean success = false;
+        boolean success = false; // 执行是否成功
         try {
+            // 连接远程地址
             boolean connected = SocketUtils.connect(javaChannel(), remoteAddress);
+            // 若未连接完成，则关注连接( OP_CONNECT )事件。
             if (!connected) {
                 selectionKey().interestOps(SelectionKey.OP_CONNECT);
             }
+            // 标记执行是否成功
             success = true;
+            // 返回是否连接完成
             return connected;
         } finally {
+            // 执行失败，则关闭 Channel
             if (!success) {
                 doClose();
             }

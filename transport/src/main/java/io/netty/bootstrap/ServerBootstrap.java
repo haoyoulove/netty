@@ -185,6 +185,7 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
 
                 // 添加 ServerBootstrapAcceptor 到 pipeline 中。
                 //使用 EventLoop 执行的原因
+                //ServerBootstrapAcceptor 这是一个接入器，专门接受新请求，把新的请求扔给某个事件循环器
                 ch.eventLoop().execute(new Runnable() {
                     @Override
                     public void run() {
