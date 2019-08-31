@@ -28,8 +28,12 @@ import static io.netty.util.concurrent.AbstractEventExecutor.*;
 
 /**
  * Abstract base class for {@link EventExecutorGroup} implementations.
+ * EventExecutor ( 事件执行器 )的分组抽象类。
  */
 public abstract class AbstractEventExecutorGroup implements EventExecutorGroup {
+
+    // #submit(...) 方法，提交一个普通任务到 EventExecutor 中
+    // 提交的 EventExecutor ，通过 #next() 方法选择
     @Override
     public Future<?> submit(Runnable task) {
         return next().submit(task);
@@ -45,6 +49,8 @@ public abstract class AbstractEventExecutorGroup implements EventExecutorGroup {
         return next().submit(task);
     }
 
+    // #schedule(...) 方法，提交一个定时任务到 EventExecutor 中
+    // 提交的 EventExecutor ，通过 #next() 方法选择
     @Override
     public ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
         return next().schedule(command, delay, unit);
@@ -65,6 +71,8 @@ public abstract class AbstractEventExecutorGroup implements EventExecutorGroup {
         return next().scheduleWithFixedDelay(command, initialDelay, delay, unit);
     }
 
+    // 关闭 EventExecutorGroup
+    // 具体的 #shutdownGracefully(long quietPeriod, long timeout, TimeUnit unit) 和 #shutdown() 方法，由子类实现。
     @Override
     public Future<?> shutdownGracefully() {
         return shutdownGracefully(DEFAULT_SHUTDOWN_QUIET_PERIOD, DEFAULT_SHUTDOWN_TIMEOUT, TimeUnit.SECONDS);
@@ -87,6 +95,8 @@ public abstract class AbstractEventExecutorGroup implements EventExecutorGroup {
         return Collections.emptyList();
     }
 
+    // #invokeAll(...) 方法，在 EventExecutor 中执行多个普通任务
+    // 执行的 EventExecutor ，通过 #next() 方法选择。并且，多个任务使用同一个 EventExecutor 。
     @Override
     public <T> List<java.util.concurrent.Future<T>> invokeAll(Collection<? extends Callable<T>> tasks)
             throws InterruptedException {
@@ -99,6 +109,8 @@ public abstract class AbstractEventExecutorGroup implements EventExecutorGroup {
         return next().invokeAll(tasks, timeout, unit);
     }
 
+    // #invokeAll(...) 方法，在 EventExecutor 中执行多个普通任务，有一个执行完成即可。
+    // 执行的 EventExecutor ，通过 #next() 方法选择。并且，多个任务使用同一个 EventExecutor 。
     @Override
     public <T> T invokeAny(Collection<? extends Callable<T>> tasks) throws InterruptedException, ExecutionException {
         return next().invokeAny(tasks);
@@ -110,6 +122,9 @@ public abstract class AbstractEventExecutorGroup implements EventExecutorGroup {
         return next().invokeAny(tasks, timeout, unit);
     }
 
+    // #execute(...) 方法，在 EventExecutor 中执行一个普通任务
+    // 执行的 EventExecutor ，通过 #next() 方法选择。
+    //看起来 #execute(...) 和 #submit(...) 方法有几分相似，具体的差异，由 EventExecutor 的实现决定。
     @Override
     public void execute(Runnable command) {
         next().execute(command);
