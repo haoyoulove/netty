@@ -659,14 +659,17 @@ public final class Unpooled {
      * {@code buffer}.
      *
      * @deprecated Use {@link ByteBuf#asReadOnly()}.
+     * 返回的是新的 io.netty.buffer.ReadOnlyByteBuf 对象。
+     * 并且，和原 ByteBuf 对象，共享 readerIndex 和 writerIndex 索引，以及相关的数据。仅仅是说，只读，不能写入。
      */
     @Deprecated
     public static ByteBuf unmodifiableBuffer(ByteBuf buffer) {
         ByteOrder endianness = buffer.order();
+        // 大端
         if (endianness == BIG_ENDIAN) {
             return new ReadOnlyByteBuf(buffer);
         }
-
+        // 小端
         return new ReadOnlyByteBuf(buffer.order(BIG_ENDIAN)).order(LITTLE_ENDIAN);
     }
 

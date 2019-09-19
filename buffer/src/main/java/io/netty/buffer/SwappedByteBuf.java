@@ -44,6 +44,7 @@ public class SwappedByteBuf extends ByteBuf {
             throw new NullPointerException("buf");
         }
         this.buf = buf;
+        // 初始化 order 属性
         if (buf.order() == ByteOrder.BIG_ENDIAN) {
             order = ByteOrder.LITTLE_ENDIAN;
         } else {
@@ -422,6 +423,12 @@ public class SwappedByteBuf extends ByteBuf {
         return this;
     }
 
+    /**
+     * 先调用 ByteBufUtil#swapInt(int value) 方法，将 value 的值，转换成相反字节序的 Int 值。
+     * @param index
+     * @param value
+     * @return
+     */
     @Override
     public ByteBuf setInt(int index, int value) {
         buf.setInt(index, ByteBufUtil.swapInt(value));
