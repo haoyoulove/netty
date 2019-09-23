@@ -152,6 +152,7 @@ final class PooledUnsafeHeapByteBuf extends PooledHeapByteBuf {
         return super.writeZero(length);
     }
 
+    // 是 Unsafe 类型独有的。
     @Override
     @Deprecated
     protected SwappedByteBuf newSwappedByteBuf() {

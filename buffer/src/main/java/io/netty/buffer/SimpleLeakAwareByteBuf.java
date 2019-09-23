@@ -25,11 +25,15 @@ import java.nio.ByteOrder;
 class SimpleLeakAwareByteBuf extends WrappedByteBuf {
 
     /**
+     *  关联的 ByteBuf 对象
      * This object's is associated with the {@link ResourceLeakTracker}. When {@link ResourceLeakTracker#close(Object)}
      * is called this object will be used as the argument. It is also assumed that this object is used when
      * {@link ResourceLeakDetector#track(Object)} is called to create {@link #leak}.
      */
     private final ByteBuf trackedByteBuf;
+    /**
+     *  ResourceLeakTracker 对象
+     */
     final ResourceLeakTracker<ByteBuf> leak;
 
     SimpleLeakAwareByteBuf(ByteBuf wrapped, ByteBuf trackedByteBuf, ResourceLeakTracker<ByteBuf> leak) {
@@ -42,11 +46,13 @@ class SimpleLeakAwareByteBuf extends WrappedByteBuf {
         this(wrapped, wrapped, leak);
     }
 
+    // 调用完父类对应方法之后，再调用newSharedLeakAwareByteBuf方法装饰成为LeakAware 的ByteBuf对象
     @Override
     public ByteBuf slice() {
         return newSharedLeakAwareByteBuf(super.slice());
     }
 
+    // 父类引用计数先加1 再装饰成LeakAware 的ByteBuf对象
     @Override
     public ByteBuf retainedSlice() {
         return unwrappedDerived(super.retainedSlice());
@@ -87,6 +93,7 @@ class SimpleLeakAwareByteBuf extends WrappedByteBuf {
         return newSharedLeakAwareByteBuf(super.asReadOnly());
     }
 
+    // 也未实现
     @Override
     public ByteBuf touch() {
         return this;
@@ -99,6 +106,7 @@ class SimpleLeakAwareByteBuf extends WrappedByteBuf {
 
     @Override
     public boolean release() {
+        // 释放完成
         if (super.release()) {
             closeLeak();
             return true;
@@ -115,6 +123,7 @@ class SimpleLeakAwareByteBuf extends WrappedByteBuf {
         return false;
     }
 
+    // 调用 #closeLeak() 方法，关闭 ResourceLeakTracker
     private void closeLeak() {
         // Close the ResourceLeakTracker with the tracked ByteBuf as argument. This must be the same that was used when
         // calling DefaultResourceLeak.track(...).

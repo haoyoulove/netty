@@ -39,10 +39,21 @@ import static io.netty.util.internal.StringUtil.EMPTY_STRING;
 import static io.netty.util.internal.StringUtil.NEWLINE;
 import static io.netty.util.internal.StringUtil.simpleClassName;
 
+/**
+ * ResourceLeakDetector 为了检测内存是否泄漏，使用了 WeakReference( 弱引用 )和 ReferenceQueue( 引用队列 )，过程如下：
+ *
+ * 根据检测级别和采样率的设置，在需要时为需要检测的 ByteBuf 创建WeakReference 引用。
+ * 当 JVM 回收掉 ByteBuf 对象时，JVM 会将 WeakReference 放入ReferenceQueue 队列中。
+ * 通过对 ReferenceQueue 中 WeakReference 的检查，判断在 GC 前是否有释放ByteBuf 的资源，就可以知道是否有资源释放。
+ * @param <T>
+ */
 public class ResourceLeakDetector<T> {
 
     private static final String PROP_LEVEL_OLD = "io.netty.leakDetectionLevel";
     private static final String PROP_LEVEL = "io.netty.leakDetection.level";
+    /**
+     * 默认内存检测级别
+     */
     private static final Level DEFAULT_LEVEL = Level.SIMPLE;
 
     private static final String PROP_TARGET_RECORDS = "io.netty.leakDetection.targetRecords";
@@ -50,12 +61,19 @@ public class ResourceLeakDetector<T> {
 
     private static final String PROP_SAMPLING_INTERVAL = "io.netty.leakDetection.samplingInterval";
     // There is a minor performance benefit in TLR if this is a power of 2.
+    /**
+     * 默认采集频率
+     */
     private static final int DEFAULT_SAMPLING_INTERVAL = 128;
 
+    /**
+     * 每个 DefaultResourceLeak 记录的 Record 数量
+     */
     private static final int TARGET_RECORDS;
     static final int SAMPLING_INTERVAL;
 
     /**
+     * 内存检测级别枚举
      * Represents the level of resource leak detection.
      */
     public enum Level {
@@ -95,12 +113,15 @@ public class ResourceLeakDetector<T> {
             return DEFAULT_LEVEL;
         }
     }
-
+    /**
+     * 内存泄露检测等级
+     */
     private static Level level;
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(ResourceLeakDetector.class);
 
     static {
+        // 获得是否禁用泄露检测
         final boolean disabled;
         if (SystemPropertyUtil.get("io.netty.noResourceLeakDetection") != null) {
             disabled = SystemPropertyUtil.getBoolean("io.netty.noResourceLeakDetection", false);
@@ -112,18 +133,24 @@ public class ResourceLeakDetector<T> {
             disabled = false;
         }
 
+        // 获得默认级别
         Level defaultLevel = disabled? Level.DISABLED : DEFAULT_LEVEL;
 
+        // 获得配置的级别字符串，从老版本的配置
         // First read old property name
         String levelStr = SystemPropertyUtil.get(PROP_LEVEL_OLD, defaultLevel.name());
 
         // If new property name is present, use it
+        // 获得配置的级别字符串，从新版本的配置
         levelStr = SystemPropertyUtil.get(PROP_LEVEL, levelStr);
+        // 获得最终的级别
         Level level = Level.parseLevel(levelStr);
 
+        // 初始化 TARGET_RECORDS
         TARGET_RECORDS = SystemPropertyUtil.getInt(PROP_TARGET_RECORDS, DEFAULT_TARGET_RECORDS);
         SAMPLING_INTERVAL = SystemPropertyUtil.getInt(PROP_SAMPLING_INTERVAL, DEFAULT_SAMPLING_INTERVAL);
 
+        // 设置最终的级别
         ResourceLeakDetector.level = level;
         if (logger.isDebugEnabled()) {
             logger.debug("-D{}: {}", PROP_LEVEL, level.name().toLowerCase());

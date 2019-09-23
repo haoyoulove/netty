@@ -37,8 +37,17 @@ import static io.netty.util.internal.ObjectUtil.checkNotNull;
  */
 public class UnpooledHeapByteBuf extends AbstractReferenceCountedByteBuf {
 
+    /**
+     * ByteBuf 分配器对象
+     */
     private final ByteBufAllocator alloc;
+    /**
+     * 字节数组
+     */
     byte[] array;
+    /**
+     * 临时 ByteBuff 对象
+     */
     private ByteBuffer tmpNioBuf;
 
     /**
@@ -48,6 +57,7 @@ public class UnpooledHeapByteBuf extends AbstractReferenceCountedByteBuf {
      * @param maxCapacity the max capacity of the underlying byte array
      */
     public UnpooledHeapByteBuf(ByteBufAllocator alloc, int initialCapacity, int maxCapacity) {
+        // 设置最大容量
         super(maxCapacity);
 
         checkNotNull(alloc, "alloc");
@@ -58,7 +68,9 @@ public class UnpooledHeapByteBuf extends AbstractReferenceCountedByteBuf {
         }
 
         this.alloc = alloc;
+        // 创建并设置字节数组
         setArray(allocateArray(initialCapacity));
+        // 设置读写索引
         setIndex(0, 0);
     }
 
@@ -119,6 +131,7 @@ public class UnpooledHeapByteBuf extends AbstractReferenceCountedByteBuf {
 
     @Override
     public ByteBuf capacity(int newCapacity) {
+        // 校验新的容量，不能超过最大容量
         checkNewCapacity(newCapacity);
         byte[] oldArray = array;
         int oldCapacity = oldArray.length;
@@ -127,6 +140,7 @@ public class UnpooledHeapByteBuf extends AbstractReferenceCountedByteBuf {
         }
 
         int bytesToCopy;
+        // 扩容
         if (newCapacity > oldCapacity) {
             bytesToCopy = oldCapacity;
         } else {
@@ -135,7 +149,9 @@ public class UnpooledHeapByteBuf extends AbstractReferenceCountedByteBuf {
         }
         byte[] newArray = allocateArray(newCapacity);
         System.arraycopy(oldArray, 0, newArray, 0, bytesToCopy);
+        // 设置数组
         setArray(newArray);
+        // 释放老数组
         freeArray(oldArray);
         return this;
     }
@@ -543,7 +559,9 @@ public class UnpooledHeapByteBuf extends AbstractReferenceCountedByteBuf {
 
     @Override
     protected void deallocate() {
+        // 释放老数组
         freeArray(array);
+        // 设置为空字节数组
         array = EmptyArrays.EMPTY_BYTES;
     }
 

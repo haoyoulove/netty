@@ -29,16 +29,52 @@ import java.nio.channels.ScatteringByteChannel;
 
 abstract class PooledByteBuf<T> extends AbstractReferenceCountedByteBuf {
 
+    /**
+     * Recycler 处理器，用于回收对象
+     */
     private final Recycler.Handle<PooledByteBuf<T>> recyclerHandle;
 
+    /**
+     * Chunk 对象
+     */
     protected PoolChunk<T> chunk;
+    /**
+     * 从 Chunk 对象中分配的内存块所处的位置
+     */
     protected long handle;
+    /**
+     * 内存空间。具体什么样的数据，通过子类设置泛型。
+     */
     protected T memory;
+    /**
+     * {@link #memory} 开始位置
+     *
+     * @see #idx(int)
+     */
     protected int offset;
+    /**
+     * 容量
+     *
+     * @see #capacity()
+     */
     protected int length;
+    /**
+     * 占用 {@link #memory} 的大小 占用的最大容量 写入数据超过maxlength容量时，会进行扩容，但是容量上限为maxCapacity
+     */
     int maxLength;
+    /**
+     * TODO 1013 Chunk
+     */
     PoolThreadCache cache;
+    /**
+     * 临时 ByteBuff 对象
+     *
+     * @see #internalNioBuffer()
+     */
     ByteBuffer tmpNioBuf;
+    /**
+     * ByteBuf 分配器对象
+     */
     private ByteBufAllocator allocator;
 
     @SuppressWarnings("unchecked")
@@ -74,6 +110,7 @@ abstract class PooledByteBuf<T> extends AbstractReferenceCountedByteBuf {
 
     /**
      * Method must be called before reuse this {@link PooledByteBufAllocator}
+     * 重用 PooledByteBuf 对象时 重置属性
      */
     final void reuse(int maxCapacity) {
         maxCapacity(maxCapacity);
@@ -92,22 +129,26 @@ abstract class PooledByteBuf<T> extends AbstractReferenceCountedByteBuf {
         return Math.min(maxLength, maxCapacity()) - writerIndex;
     }
 
+    // 调整容量大小 可能对 memory 扩容或缩容
     @Override
     public final ByteBuf capacity(int newCapacity) {
-        if (newCapacity == length) {
+        if (newCapacity == length) {  // 相等，无需扩容 / 缩容
             ensureAccessible();
             return this;
         }
+        // 校验新的容量，不能超过最大容量
         checkNewCapacity(newCapacity);
         if (!chunk.unpooled) {
             // If the request capacity does not require reallocation, just update the length of the memory.
+            // 如果请求容量不需要重新分配，只需更新内存的长度。
             if (newCapacity > length) {
                 if (newCapacity <= maxLength) {
                     length = newCapacity;
                     return this;
                 }
+                //  大于 maxLength 的一半
             } else if (newCapacity > maxLength >>> 1 &&
-                    (maxLength > 512 || newCapacity > maxLength - 16)) {
+                    (maxLength > 512 || newCapacity > maxLength - 16)) { //  因为 Netty SubPage 最小是 16 ，如果小于等 16 ，无法缩容。
                 // here newCapacity < length
                 length = newCapacity;
                 trimIndicesToCapacity(newCapacity);
@@ -115,6 +156,7 @@ abstract class PooledByteBuf<T> extends AbstractReferenceCountedByteBuf {
             }
         }
 
+         // 非池化的都需要扩容/缩容
         // Reallocation required.
         chunk.arena.reallocate(this, newCapacity, true);
         return this;
@@ -125,11 +167,13 @@ abstract class PooledByteBuf<T> extends AbstractReferenceCountedByteBuf {
         return allocator;
     }
 
+    // 统一大端模式
     @Override
     public final ByteOrder order() {
         return ByteOrder.BIG_ENDIAN;
     }
 
+    // 无装饰
     @Override
     public final ByteBuf unwrap() {
         return null;
@@ -153,6 +197,7 @@ abstract class PooledByteBuf<T> extends AbstractReferenceCountedByteBuf {
 
     protected final ByteBuffer internalNioBuffer() {
         ByteBuffer tmpNioBuf = this.tmpNioBuf;
+        // 为空，创建临时 ByteBuf 对象
         if (tmpNioBuf == null) {
             this.tmpNioBuf = tmpNioBuf = newInternalNioBuffer(memory);
         }
@@ -164,20 +209,24 @@ abstract class PooledByteBuf<T> extends AbstractReferenceCountedByteBuf {
     @Override
     protected final void deallocate() {
         if (handle >= 0) {
+            // 重置属性
             final long handle = this.handle;
             this.handle = -1;
             memory = null;
+            // 释放内存回Arena中
             chunk.arena.free(chunk, tmpNioBuf, handle, maxLength, cache);
             tmpNioBuf = null;
             chunk = null;
+            // 回收对象
             recycle();
         }
     }
 
     private void recycle() {
-        recyclerHandle.recycle(this);
+        recyclerHandle.recycle(this); // 回收对象
     }
 
+    // 获得指定位置爱memory变量中的位置
     protected final int idx(int index) {
         return offset + index;
     }

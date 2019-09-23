@@ -1171,6 +1171,9 @@ public final class ByteBufUtil {
 
     static final class ThreadLocalUnsafeDirectByteBuf extends UnpooledUnsafeDirectByteBuf {
 
+        /**
+         * Recycler 对象
+         */
         private static final Recycler<ThreadLocalUnsafeDirectByteBuf> RECYCLER =
                 new Recycler<ThreadLocalUnsafeDirectByteBuf>() {
                     @Override
@@ -1180,11 +1183,15 @@ public final class ByteBufUtil {
                 };
 
         static ThreadLocalUnsafeDirectByteBuf newInstance() {
+            // 从 RECYCLER 中，获得 ThreadLocalUnsafeDirectByteBuf 对象
             ThreadLocalUnsafeDirectByteBuf buf = RECYCLER.get();
+            // 初始化 ref 为 1
             buf.resetRefCnt();
             return buf;
         }
-
+        /**
+         * Recycler 处理器
+         */
         private final Handle<ThreadLocalUnsafeDirectByteBuf> handle;
 
         private ThreadLocalUnsafeDirectByteBuf(Handle<ThreadLocalUnsafeDirectByteBuf> handle) {
@@ -1194,6 +1201,7 @@ public final class ByteBufUtil {
 
         @Override
         protected void deallocate() {
+            // ，只有 ByteBuffer 容量小于 THREAD_LOCAL_BUFFER_SIZE 时，才会重用 ByteBuffer 对象
             if (capacity() > THREAD_LOCAL_BUFFER_SIZE) {
                 super.deallocate();
             } else {
@@ -1205,6 +1213,9 @@ public final class ByteBufUtil {
 
     static final class ThreadLocalDirectByteBuf extends UnpooledDirectByteBuf {
 
+        /**
+         * Recycler 对象
+         */
         private static final Recycler<ThreadLocalDirectByteBuf> RECYCLER = new Recycler<ThreadLocalDirectByteBuf>() {
             @Override
             protected ThreadLocalDirectByteBuf newObject(Handle<ThreadLocalDirectByteBuf> handle) {
@@ -1213,11 +1224,16 @@ public final class ByteBufUtil {
         };
 
         static ThreadLocalDirectByteBuf newInstance() {
+            // 从 RECYCLER 中，获得 ThreadLocalUnsafeDirectByteBuf 对象
             ThreadLocalDirectByteBuf buf = RECYCLER.get();
+            // 初始化 ref 为 1
             buf.resetRefCnt();
             return buf;
         }
 
+        /**
+         * Recycler 处理器
+         */
         private final Handle<ThreadLocalDirectByteBuf> handle;
 
         private ThreadLocalDirectByteBuf(Handle<ThreadLocalDirectByteBuf> handle) {

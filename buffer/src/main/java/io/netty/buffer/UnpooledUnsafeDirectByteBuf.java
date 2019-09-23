@@ -29,6 +29,7 @@ import java.nio.ByteBuffer;
  */
 public class UnpooledUnsafeDirectByteBuf extends UnpooledDirectByteBuf {
 
+    // 内存地址
     long memoryAddress;
 
     /**
