@@ -44,6 +44,7 @@ import static io.netty.util.internal.ObjectUtil.checkNotNull;
  * A virtual buffer which shows multiple buffers as a single merged buffer.  It is recommended to use
  * {@link ByteBufAllocator#compositeBuffer()} or {@link Unpooled#wrappedBuffer(ByteBuf...)} instead of calling the
  * constructor explicitly.
+ * netty的零拷贝，以及合并、切片、包装等操作类
  */
 public class CompositeByteBuf extends AbstractReferenceCountedByteBuf implements Iterable<ByteBuf> {
 
@@ -60,7 +61,7 @@ public class CompositeByteBuf extends AbstractReferenceCountedByteBuf implements
     private boolean freed;
 
     private CompositeByteBuf(ByteBufAllocator alloc, boolean direct, int maxNumComponents, int initSize) {
-        super(AbstractByteBufAllocator.DEFAULT_MAX_CAPACITY);
+        super(AbstractByteBufAllocator.DEFAULT_MAX_CAPACITY);  //设置maxCapacity为Integer.MAX_VALUE
         if (alloc == null) {
             throw new NullPointerException("alloc");
         }
@@ -88,6 +89,7 @@ public class CompositeByteBuf extends AbstractReferenceCountedByteBuf implements
 
         addComponents0(false, 0, buffers, offset);
         consolidateIfNeeded();
+        // 设置了读写位置
         setIndex0(0, capacity());
     }
 
@@ -97,6 +99,7 @@ public class CompositeByteBuf extends AbstractReferenceCountedByteBuf implements
                 buffers instanceof Collection ? ((Collection<ByteBuf>) buffers).size() : 0);
 
         addComponents(false, 0, buffers);
+        // 设置了读写位置
         setIndex(0, capacity());
     }
 
@@ -224,7 +227,7 @@ public class CompositeByteBuf extends AbstractReferenceCountedByteBuf implements
 
     /**
      * Add the given {@link ByteBuf}s and increase the {@code writerIndex} if {@code increaseWriterIndex} is
-     * {@code true}.
+     {@code true}.
      *
      * {@link ByteBuf#release()} ownership of all {@link ByteBuf} objects in {@code buffers} is transferred to this
      * {@link CompositeByteBuf}.
@@ -516,6 +519,8 @@ public class CompositeByteBuf extends AbstractReferenceCountedByteBuf implements
     /**
      * This should only be called as last operation from a method as this may adjust the underlying
      * array of components and so affect the index etc.
+     *
+     * 当实际components的数量大于maxNumComponents时, 所有的components就会被合并为一个ByteBuf
      */
     private void consolidateIfNeeded() {
         // Consolidate if the number of components will exceed the allowed maximum by the current
@@ -1843,6 +1848,9 @@ public class CompositeByteBuf extends AbstractReferenceCountedByteBuf implements
         return result + ", components=" + componentCount + ')';
     }
 
+    /**
+     * Component是私有内嵌类,用于保存ByteBuf的引用,长度等信息.
+     */
     private static final class Component {
         final ByteBuf buf;
         int adjustment;
