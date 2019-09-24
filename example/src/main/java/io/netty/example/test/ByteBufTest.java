@@ -12,6 +12,9 @@ public class ByteBufTest {
 
 	public static void main(String[] args) {
 
-		ByteBuf buf = ReferenceCountUtil.releaseLater(Unpooled.directBuffer(512));
+			int minNewCapacity =  10;
+			int threshold = 5;
+			int i = minNewCapacity / threshold * threshold;
+			System.out.println(i);
 	}
 }

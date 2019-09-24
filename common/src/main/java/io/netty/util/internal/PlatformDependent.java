@@ -416,11 +416,15 @@ public final class PlatformDependent {
 
     /**
      * Creates a new fastest {@link LongCounter} implementation for the current platform.
+     * 比较简单，两个计数器。
      */
     public static LongCounter newLongCounter() {
+
         if (javaVersion() >= 8) {
+            // 使用 java.util.concurrent.atomic.LongAdder
             return new LongAdderCounter();
         } else {
+            // java.util.concurrent.atomic.AtomicLong
             return new AtomicLongCounter();
         }
     }

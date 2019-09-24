@@ -17,7 +17,8 @@ package io.netty.buffer;
 
 /**
  * Implementations are responsible to allocate buffers. Implementations of this interface are expected to be
- * thread-safe.
+ thread-safe.
+ 实现负责分配缓冲区。这个接口的实现应该是线程安全的。
  */
 public interface ByteBufAllocator {
 
@@ -26,6 +27,7 @@ public interface ByteBufAllocator {
     /**
      * Allocate a {@link ByteBuf}. If it is a direct or heap buffer
      * depends on the actual implementation.
+     * 创建ByteBuf 对象
      */
     ByteBuf buffer();
 
@@ -44,6 +46,7 @@ public interface ByteBufAllocator {
 
     /**
      * Allocate a {@link ByteBuf}, preferably a direct buffer which is suitable for I/O.
+     * 分配一个{@link ByteBuf}，最好是一个适合I/O的直接缓冲区。
      */
     ByteBuf ioBuffer();
 
@@ -59,6 +62,7 @@ public interface ByteBufAllocator {
 
     /**
      * Allocate a heap {@link ByteBuf}.
+     * 创建一个 Heap Buffer 对象
      */
     ByteBuf heapBuffer();
 
@@ -75,6 +79,7 @@ public interface ByteBufAllocator {
 
     /**
      * Allocate a direct {@link ByteBuf}.
+     * 创建一个 Direct Buffer 对象
      */
     ByteBuf directBuffer();
 
@@ -92,6 +97,7 @@ public interface ByteBufAllocator {
     /**
      * Allocate a {@link CompositeByteBuf}.
      * If it is a direct or heap buffer depends on the actual implementation.
+     * 创建一个 Composite ByteBuf 对象
      */
     CompositeByteBuf compositeBuffer();
 
@@ -103,6 +109,7 @@ public interface ByteBufAllocator {
 
     /**
      * Allocate a heap {@link CompositeByteBuf}.
+     * 创建一个 Composite Heap ByteBuf 对象
      */
     CompositeByteBuf compositeHeapBuffer();
 
@@ -113,6 +120,7 @@ public interface ByteBufAllocator {
 
     /**
      * Allocate a direct {@link CompositeByteBuf}.
+     * 创建一个 Composite Direct ByteBuf 对象
      */
     CompositeByteBuf compositeDirectBuffer();
 
@@ -123,12 +131,14 @@ public interface ByteBufAllocator {
 
     /**
      * Returns {@code true} if direct {@link ByteBuf}'s are pooled
+     * 是否基于 Direct ByteBuf 对象池
      */
     boolean isDirectBufferPooled();
 
     /**
      * Calculate the new capacity of a {@link ByteBuf} that is used when a {@link ByteBuf} needs to expand by the
      {@code minNewCapacity} with {@code maxCapacity} as upper-bound.
+     在 ByteBuf 扩容时，计算新的容量，该容量的值在 [minNewCapacity, maxCapacity] 范围内
      */
     int calculateNewCapacity(int minNewCapacity, int maxCapacity);
  }

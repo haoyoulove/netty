@@ -330,6 +330,7 @@ public abstract class AbstractByteBuf extends ByteBuf {
     }
 
     // Called after a capacity reduction
+    //在容量减少后调用
     protected final void trimIndicesToCapacity(int newCapacity) {
         if (writerIndex() > newCapacity) {
             setIndex0(Math.min(readerIndex(), newCapacity), newCapacity);
