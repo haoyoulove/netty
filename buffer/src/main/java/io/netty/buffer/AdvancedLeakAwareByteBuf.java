@@ -33,6 +33,9 @@ import java.nio.channels.GatheringByteChannel;
 import java.nio.channels.ScatteringByteChannel;
 import java.nio.charset.Charset;
 
+/**
+ * 继承 SimpleLeakAwareByteBuf 类，ADVANCED 和 PARANOID 级别的 LeakAware ByteBuf 实现类。
+ */
 final class AdvancedLeakAwareByteBuf extends SimpleLeakAwareByteBuf {
 
     private static final String PROP_ACQUIRE_AND_RELEASE_ONLY = "io.netty.leakDetection.acquireAndReleaseOnly";
@@ -60,6 +63,7 @@ final class AdvancedLeakAwareByteBuf extends SimpleLeakAwareByteBuf {
     }
 
     static void recordLeakNonRefCountingOperation(ResourceLeakTracker<ByteBuf> leak) {
+        // 其他方法是否会记录信息
         if (!ACQUIRE_AND_RELEASE_ONLY) {
             leak.record();
         }
@@ -925,7 +929,7 @@ final class AdvancedLeakAwareByteBuf extends SimpleLeakAwareByteBuf {
 
     @Override
     public ByteBuf retain() {
-        leak.record();
+        leak.record(); // 记录信息
         return super.retain();
     }
 
@@ -953,6 +957,7 @@ final class AdvancedLeakAwareByteBuf extends SimpleLeakAwareByteBuf {
         return this;
     }
 
+    // 记录信息
     @Override
     public ByteBuf touch(Object hint) {
         leak.record(hint);

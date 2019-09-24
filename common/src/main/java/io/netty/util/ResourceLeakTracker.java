@@ -18,6 +18,7 @@ package io.netty.util;
 public interface ResourceLeakTracker<T>  {
 
     /**
+     * 记录
      * Records the caller's current stack trace so that the {@link ResourceLeakDetector} can tell where the leaked
      * resource was accessed lastly. This method is a shortcut to {@link #record(Object) record(null)}.
      */
@@ -30,6 +31,7 @@ public interface ResourceLeakTracker<T>  {
     void record(Object hint);
 
     /**
+     * 关闭
      * Close the leak so that {@link ResourceLeakTracker} does not warn about leaked resources.
      * After this method is called a leak associated with this ResourceLeakTracker should not be reported.
      *
