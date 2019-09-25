@@ -34,6 +34,11 @@ public abstract class MultithreadEventLoopGroup extends MultithreadEventExecutor
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(MultithreadEventLoopGroup.class);
 
+    /**
+     * 默认 EventLoop 线程数
+     * EventLoopGroup 默认拥有的 EventLoop 数量
+     * 目前 CPU 基本都是超线程，一个 CPU 可对应 2 个线程
+     */
     private static final int DEFAULT_EVENT_LOOP_THREADS;
 
     static {
@@ -68,19 +73,23 @@ public abstract class MultithreadEventLoopGroup extends MultithreadEventExecutor
         super(nThreads == 0 ? DEFAULT_EVENT_LOOP_THREADS : nThreads, executor, chooserFactory, args);
     }
 
+    // 覆盖父类方法，增加了线程优先级为 Thread.MAX_PRIORITY
     @Override
     protected ThreadFactory newDefaultThreadFactory() {
         return new DefaultThreadFactory(getClass(), Thread.MAX_PRIORITY);
     }
 
+    // 选择下一个 EventLoop 对象
     @Override
     public EventLoop next() {
         return (EventLoop) super.next();
     }
 
+    //创建 EventExecutor 对象
     @Override
     protected abstract EventLoop newChild(Executor executor, Object... args) throws Exception;
 
+    // 注册 Channel 到 EventLoopGroup 中。实际上，EventLoopGroup 会分配一个 EventLoop 给该 Channel 注册
     @Override
     public ChannelFuture register(Channel channel) {
         return next().register(channel);

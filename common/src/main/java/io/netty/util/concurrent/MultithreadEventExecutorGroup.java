@@ -34,6 +34,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
 
     /**
      * EventExecutor 数组
+     * 线程池，数组形式可知为固定线程池
      */
     private final EventExecutor[] children;
     /**
@@ -44,6 +45,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
     private final Set<EventExecutor> readonlyChildren;
     /**
      * 已终止的 EventExecutor 数量
+     * 终止的线程个数
      */
     private final AtomicInteger terminatedChildren = new AtomicInteger();
     /**
@@ -52,6 +54,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
     private final Promise<?> terminationFuture = new DefaultPromise(GlobalEventExecutor.INSTANCE);
     /**
      * EventExecutor 选择器
+     * 线程选择器
      */
     private final EventExecutorChooserFactory.EventExecutorChooser chooser;
 
@@ -84,6 +87,11 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
      * @param executor          the Executor to use, or {@code null} if the default should be used.
      * @param chooserFactory    the {@link EventExecutorChooserFactory} to use.
      * @param args              arguments which will passed to each {@link #newChild(Executor, Object...)} call
+     *
+     * (1).设置线程工厂
+     * (2).设置线程选择器
+     * (3).实例化线程
+     * (4).设置线程终止异步结果
      */
     protected MultithreadEventExecutorGroup(int nThreads, Executor executor,
                                             EventExecutorChooserFactory chooserFactory, Object... args) {
@@ -154,15 +162,18 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
         readonlyChildren = Collections.unmodifiableSet(childrenSet);
     }
 
+    // 创建线程工厂对象 创建的对象为 DefaultThreadFactory
     protected ThreadFactory newDefaultThreadFactory() {
         return new DefaultThreadFactory(getClass());
     }
 
+    // 选择下一个 EventExecutor 对象
     @Override
     public EventExecutor next() {
         return chooser.next();
     }
 
+    // 获得 EventExecutor 数组的迭代器(不可变数组)
     @Override
     public Iterator<EventExecutor> iterator() {
         return readonlyChildren.iterator();
@@ -180,7 +191,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
     /**
      * Create a new EventExecutor which will later then accessible via the {@link #next()}  method. This method will be
      * called for each thread that will serve this {@link MultithreadEventExecutorGroup}.
-     *
+     *子类实现该方法，创建其对应的 EventExecutor 实现类的对象
      */
     protected abstract EventExecutor newChild(Executor executor, Object... args) throws Exception;
 

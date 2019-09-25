@@ -1594,11 +1594,11 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
     }
 
     /**
-     * Transfers this buffer's data to a newly created buffer starting at
-     * the current {@code readerIndex} and increases the {@code readerIndex}
-     * by the number of the transferred bytes (= {@code length}).
-     * The returned buffer's {@code readerIndex} and {@code writerIndex} are
-     * {@code 0} and {@code length} respectively.
+      Transfers this buffer's data to a newly created buffer starting at
+      the current {@code readerIndex} and increases the {@code readerIndex}
+      by the number of the transferred bytes (= {@code length}).
+      The returned buffer's {@code readerIndex} and {@code writerIndex} are
+      {@code 0} and {@code length} respectively.
      *
      * @param length the number of bytes to transfer
      *
@@ -1611,8 +1611,8 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
 
     /**
      * Returns a new slice of this buffer's sub-region starting at the current
-     * {@code readerIndex} and increases the {@code readerIndex} by the size
-     * of the new slice (= {@code length}).
+      {@code readerIndex} and increases the {@code readerIndex} by the size
+      of the new slice (= {@code length}).
      * <p>
      * Also be aware that this method will NOT call {@link #retain()} and so the
      * reference count will NOT be increased.

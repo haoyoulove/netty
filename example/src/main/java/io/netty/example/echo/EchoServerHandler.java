@@ -30,18 +30,18 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
 
-//        ctx.write(msg);
-        System.out.println("服务端测试 channelRead 接收->"+msg);
-        for (int i = 0; i < 100; i++) {
-            ByteBuf byteBuf = Unpooled.directBuffer(512);
-            byteBuf.writeLong(123);
-            byteBuf.writeLong(123);
-            byteBuf.writeLong(123);
-            byteBuf.writeLong(123);
-
-            ByteBuf readResult = byteBuf.readBytes(32);
-            System.out.println("测试->"+byteBuf+" i->"+i+" readResult->"+readResult);
-        }
+        ctx.write(msg);
+//        System.out.println("服务端测试 channelRead 接收->"+msg);
+//        for (int i = 0; i < 100; i++) {
+//            ByteBuf byteBuf = Unpooled.directBuffer(512);
+//            byteBuf.writeLong(123);
+//            byteBuf.writeLong(123);
+//            byteBuf.writeLong(123);
+//            byteBuf.writeLong(123);
+//
+//            ByteBuf readResult = byteBuf.readBytes(32);
+//            System.out.println("测试->"+byteBuf+" i->"+i+" readResult->"+readResult);
+//        }
     }
 
     @Override
