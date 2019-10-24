@@ -23,6 +23,9 @@ import java.util.NoSuchElementException;
 
 final class SelectedSelectionKeySet extends AbstractSet<SelectionKey> {
 
+    /**
+     * SelectionKey 数组
+     */
     SelectionKey[] keys;
     int size;
 
@@ -30,6 +33,7 @@ final class SelectedSelectionKeySet extends AbstractSet<SelectionKey> {
         keys = new SelectionKey[1024];
     }
 
+    // 相比 SelectorImpl 中使用的 selectedKeys 所使用的 HashSet 的 #add(E e) 方法，事件复杂度从 O(lgn) 降低到 O(1)
     @Override
     public boolean add(SelectionKey o) {
         if (o == null) {
@@ -89,13 +93,16 @@ final class SelectedSelectionKeySet extends AbstractSet<SelectionKey> {
     }
 
     void reset(int start) {
+        // 重置数组内容为空
         Arrays.fill(keys, start, size, null);
         size = 0;
     }
 
     private void increaseCapacity() {
+        // 两倍扩容
         SelectionKey[] newKeys = new SelectionKey[keys.length << 1];
         System.arraycopy(keys, 0, newKeys, 0, size);
+        // 赋值给老数组
         keys = newKeys;
     }
 }

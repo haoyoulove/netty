@@ -27,13 +27,17 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @SuppressWarnings("ComparableImplementedButEqualsNotOverridden")
 final class ScheduledFutureTask<V> extends PromiseTask<V> implements ScheduledFuture<V>, PriorityQueueNode {
+    // 调度任务ID生成器
     private static final AtomicLong nextTaskId = new AtomicLong();
+    // 调度相对时间起点
     private static final long START_TIME = System.nanoTime();
 
+    // 获取相对的当前时间
     static long nanoTime() {
         return System.nanoTime() - START_TIME;
     }
 
+    // 获取相对的截止时间
     static long deadlineNanos(long delay) {
         long deadlineNanos = nanoTime() + delay;
         // Guard against overflow
@@ -44,9 +48,18 @@ final class ScheduledFutureTask<V> extends PromiseTask<V> implements ScheduledFu
         return START_TIME;
     }
 
+    // 调度任务ID
     private final long id = nextTaskId.getAndIncrement();
+
+    // 调度任务截止时间即到了该时间点任务将被执行
     private long deadlineNanos;
-    /* 0 - no repeat, >0 - repeat at fixed rate, <0 - repeat with fixed delay */
+
+    /* 0 - no repeat, >0 - repeat at fixed rate, <0 - repeat with fixed delay
+     *  =0 - 只执行一次  不重复
+     *  >0 - 按照计划执行时间计算 重复按频率执行
+     *  <0 - 按照实际执行时间计算 重新按延迟时间执行
+    * */
+    // 任务时间间隔
     private final long periodNanos;
 
     private int queueIndex = INDEX_NOT_IN_QUEUE;
@@ -92,10 +105,15 @@ final class ScheduledFutureTask<V> extends PromiseTask<V> implements ScheduledFu
         return deadlineToDelayNanos(deadlineNanos());
     }
 
+    // 距离当前时间，还要多久可执行。若为负数，直接返回 0
     static long deadlineToDelayNanos(long deadlineNanos) {
         return Math.max(0, deadlineNanos - nanoTime());
     }
 
+    /**
+     * @param currentTimeNanos 指定时间
+     * @return 距离指定时间，还要多久可执行。若为负数，直接返回 0
+     */
     public long delayNanos(long currentTimeNanos) {
         return Math.max(0, deadlineNanos() - (currentTimeNanos - START_TIME));
     }
@@ -105,6 +123,7 @@ final class ScheduledFutureTask<V> extends PromiseTask<V> implements ScheduledFu
         return unit.convert(delayNanos(), TimeUnit.NANOSECONDS);
     }
 
+    // 按照 deadlineNanos、id 属性升序排序。
     @Override
     public int compareTo(Delayed o) {
         if (this == o) {
@@ -130,21 +149,28 @@ final class ScheduledFutureTask<V> extends PromiseTask<V> implements ScheduledFu
         assert executor().inEventLoop();
         try {
             if (periodNanos == 0) {
+                // 设置任务不可取消
                 if (setUncancellableInternal()) {
+                    // 执行任务
                     V result = task.call();
+                    // 通知任务执行成功
                     setSuccessInternal(result);
                 }
             } else {
+                // 判断任务并未取消
                 // check if is done as it may was cancelled
                 if (!isCancelled()) {
+                    // 执行任务
                     task.call();
                     if (!executor().isShutdown()) {
+                        // 计算下次执行时间
                         if (periodNanos > 0) {
                             deadlineNanos += periodNanos;
                         } else {
                             deadlineNanos = nanoTime() - periodNanos;
                         }
                         if (!isCancelled()) {
+                            // 重新添加到任务队列，等待下次定时执行
                             // scheduledTaskQueue can never be null as we lazy init it before submit the task!
                             Queue<ScheduledFutureTask<?>> scheduledTaskQueue =
                                     ((AbstractScheduledEventExecutor) executor()).scheduledTaskQueue;
@@ -167,12 +193,14 @@ final class ScheduledFutureTask<V> extends PromiseTask<V> implements ScheduledFu
     @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
         boolean canceled = super.cancel(mayInterruptIfRunning);
+        // 取消成功，移除出定时任务队列
         if (canceled) {
             ((AbstractScheduledEventExecutor) executor()).removeScheduled(this);
         }
         return canceled;
     }
 
+    // 移除任务
     boolean cancelWithoutRemove(boolean mayInterruptIfRunning) {
         return super.cancel(mayInterruptIfRunning);
     }
