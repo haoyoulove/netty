@@ -94,8 +94,7 @@ public class ChannelInboundHandlerAdapter extends ChannelHandlerAdapter implemen
     }
 
     /**
-     * Calls {@link ChannelHandlerContext#fireChannelReadComplete()} to forward
-     * to the next {@link ChannelInboundHandler} in the {@link ChannelPipeline}.
+     * Calls {@link ChannelHandlerContext#fireChannelReadComplete()} to forward  to the next {@link ChannelInboundHandler} in the {@link ChannelPipeline}.
      *
      * Sub-classes may override this method to change behavior.
      */

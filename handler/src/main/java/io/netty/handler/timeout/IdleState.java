@@ -32,6 +32,7 @@ public enum IdleState {
     WRITER_IDLE,
     /**
      * No data was either received or sent for a while.
+     * 读 或者 写 任一空闲
      */
     ALL_IDLE
 }

@@ -60,6 +60,9 @@ import java.util.concurrent.TimeUnit;
  * @see IdleStateHandler
  */
 public class ReadTimeoutHandler extends IdleStateHandler {
+    /**
+     * Channel 是否关闭
+     */
     private boolean closed;
 
     /**
@@ -69,6 +72,7 @@ public class ReadTimeoutHandler extends IdleStateHandler {
      *        read timeout in seconds
      */
     public ReadTimeoutHandler(int timeoutSeconds) {
+        // 禁用 Write / All 的空闲检测
         this(timeoutSeconds, TimeUnit.SECONDS);
     }
 
@@ -95,8 +99,11 @@ public class ReadTimeoutHandler extends IdleStateHandler {
      */
     protected void readTimedOut(ChannelHandlerContext ctx) throws Exception {
         if (!closed) {
+            // <1> 触发 Exception Caught 事件到 pipeline 中，异常为 ReadTimeoutException
             ctx.fireExceptionCaught(ReadTimeoutException.INSTANCE);
+            // <2> 关闭 Channel 通道
             ctx.close();
+            // <3> 标记 Channel 为已关闭
             closed = true;
         }
     }

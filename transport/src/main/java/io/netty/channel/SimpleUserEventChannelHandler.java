@@ -93,15 +93,20 @@ public abstract class SimpleUserEventChannelHandler<I> extends ChannelInboundHan
     public final void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         boolean release = true;
         try {
+            // 判断是否为匹配的事件
             if (acceptEvent(evt)) {
                 @SuppressWarnings("unchecked")
                 I ievt = (I) evt;
+                // 处理事件
                 eventReceived(ctx, ievt);
             } else {
+                // 不需要释放事件信息
                 release = false;
+                // 触发 Channel Read 到下一个事件节点
                 ctx.fireUserEventTriggered(evt);
             }
         } finally {
+            // 判断，是否要释放事件信息
             if (autoRelease && release) {
                 ReferenceCountUtil.release(evt);
             }

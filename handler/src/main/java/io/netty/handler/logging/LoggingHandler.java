@@ -319,6 +319,7 @@ public class LoggingHandler extends ChannelDuplexHandler {
 
     /**
      * Generates the default log message of the specified event whose argument is a {@link ByteBuf}.
+     * 生成指定事件的默认日志消息，该事件的参数是{@link ByteBuf}。
      */
     private static String formatByteBuf(ChannelHandlerContext ctx, String eventName, ByteBuf msg) {
         String chStr = ctx.channel().toString();

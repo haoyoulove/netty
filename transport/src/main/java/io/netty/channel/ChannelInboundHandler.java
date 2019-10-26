@@ -48,10 +48,9 @@ public interface ChannelInboundHandler extends ChannelHandler {
     void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception;
 
     /**
-     * Invoked when the last message read by the current read operation has been consumed by
-     * {@link #channelRead(ChannelHandlerContext, Object)}.  If {@link ChannelOption#AUTO_READ} is off, no further
-     * attempt to read an inbound data from the current {@link Channel} will be made until
-     * {@link ChannelHandlerContext#read()} is called.
+     * Invoked when the last message read by the current read operation has been consumed by {@link #channelRead(ChannelHandlerContext, Object)}.
+     * If {@link ChannelOption#AUTO_READ} is off,
+     * no further attempt to read an inbound data from the current {@link Channel} will be made until {@link ChannelHandlerContext#read()} is called.
      */
     void channelReadComplete(ChannelHandlerContext ctx) throws Exception;
 

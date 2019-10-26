@@ -25,6 +25,7 @@ public final class WriteTimeoutException extends TimeoutException {
 
     private static final long serialVersionUID = -144786655770296065L;
 
+    // 单例
     public static final WriteTimeoutException INSTANCE = PlatformDependent.javaVersion() >= 7 ?
             new WriteTimeoutException(true) : new WriteTimeoutException();
 
