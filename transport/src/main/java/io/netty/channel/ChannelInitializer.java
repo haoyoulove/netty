@@ -117,7 +117,7 @@ public abstract class ChannelInitializer<C extends Channel> extends ChannelInbou
             // surprises if a ChannelInitializer will add another ChannelInitializer. This is as all handlers
             // will be added in the expected order.
             //在当前默认Channel管道下的实现下，总是返回true。在handlerAdded方法中调用initChannel方法好处是，
-            // 如果一个初始化器添加到另外一个初始化器，不会从排序。所有的通道处理器将会以期望的顺序添加Channel管道中
+            // 如果一个初始化器添加到另外一个初始化器，不会重排序。所有的通道处理器将会以期望的顺序添加Channel管道中
             if (initChannel(ctx)) {
 
                 // We are done with init the Channel, removing the initializer now.

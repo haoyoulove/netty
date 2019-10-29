@@ -529,8 +529,8 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 // 标记 Channel 为已注册
                 registered = true;
 
-                // Ensure we call handlerAdded(...) before we actually notify the promise. This is needed as the user may already
-                // fire events through the pipeline in the ChannelFutureListener.
+                // Ensure we call handlerAdded(...) before we actually notify the promise.
+                // This is needed as the user may already  fire events through the pipeline in the ChannelFutureListener.
                 // 确保在实际通知承诺之前调用handlerAdded(…)。这是必需的，因为用户可能已经通过ChannelFutureListener中的管道触发了事件。
                 // ServerBootstrap 中 对channel设置的 ChannelInitializer 将被执行，进行 Channel 的 Handler 的初始化。
                 pipeline.invokeHandlerAddedIfNeeded();
