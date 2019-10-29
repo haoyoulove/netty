@@ -99,16 +99,18 @@ public abstract class MessageToByteEncoder<I> extends ChannelOutboundHandlerAdap
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         ByteBuf buf = null;
         try {
+            // 需要判断当前编码器能否处理这类对象
             if (acceptOutboundMessage(msg)) {
                 @SuppressWarnings("unchecked")
                 I cast = (I) msg;
+                // 分配内存
                 buf = allocateBuffer(ctx, cast, preferDirect);
                 try {
                     encode(ctx, cast, buf);
                 } finally {
                     ReferenceCountUtil.release(cast);
                 }
-
+                // buf到这里已经装载着数据，于是把该buf往前丢，知道head节点
                 if (buf.isReadable()) {
                     ctx.write(buf, promise);
                 } else {
@@ -117,6 +119,7 @@ public abstract class MessageToByteEncoder<I> extends ChannelOutboundHandlerAdap
                 }
                 buf = null;
             } else {
+                // 如果不能处理，就将outBound事件继续往前面传播
                 ctx.write(msg, promise);
             }
         } catch (EncoderException e) {

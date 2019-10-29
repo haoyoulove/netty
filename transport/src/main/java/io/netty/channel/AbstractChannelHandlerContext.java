@@ -849,6 +849,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         PromiseNotificationUtil.tryFailure(promise, cause, promise instanceof VoidChannelPromise ? null : logger);
     }
 
+    // 传播异常事件
     private void notifyHandlerException(Throwable cause) {
         // <1> 如果是在 `ChannelHandler#exceptionCaught(ChannelHandlerContext ctx, Throwable cause)` 方法中，
         // 仅打印错误日志。否则会形成死循环。
@@ -957,7 +958,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         } while ((ctx.executionMask & mask) == 0);
         return ctx;
     }
-
+    // 其实就是为了挑选哪些事件 可以从head/tail开始，哪些事件跳过head/tail
     private AbstractChannelHandlerContext findContextOutbound(int mask) {
         // 循环，向前获得一个 Outbound 节点
         // 使用mask作为各个方法的标记
