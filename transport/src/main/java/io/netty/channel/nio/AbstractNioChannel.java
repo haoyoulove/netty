@@ -176,6 +176,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
 
     /**
      * Set read pending to {@code false}.
+     * 移除对“读”事件的感兴趣( 对于 NioServerSocketChannel 的 “读“事件就是 SelectionKey.OP_ACCEPT)
      */
     protected final void clearReadPending() {
         if (isRegistered()) {
@@ -229,6 +230,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
 
     protected abstract class AbstractNioUnsafe extends AbstractUnsafe implements NioUnsafe {
 
+        // 通过取反求并，后调用 SelectionKey#interestOps(interestOps) 方法，仅移除对“读”事件的感兴趣
         protected final void removeReadOp() {
             SelectionKey key = selectionKey();
             // Check first if the key is still valid as it may be canceled as part of the deregistration

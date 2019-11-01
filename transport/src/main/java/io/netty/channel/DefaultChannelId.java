@@ -203,6 +203,7 @@ public final class DefaultChannelId implements ChannelId {
         return i;
     }
 
+    // 使用最后 4 字节的随机数字，并转换成 16 进制的数字字符串
     @Override
     public String asShortText() {
         String shortValue = this.shortValue;
@@ -222,13 +223,13 @@ public final class DefaultChannelId implements ChannelId {
     }
 
     private String newLongValue() {
-        StringBuilder buf = new StringBuilder(2 * data.length + 5);
+        StringBuilder buf = new StringBuilder(2 * data.length + 5);  // + 5 的原因是有 5 个 '-'
         int i = 0;
-        i = appendHexDumpField(buf, i, MACHINE_ID.length);
-        i = appendHexDumpField(buf, i, PROCESS_ID_LEN);
-        i = appendHexDumpField(buf, i, SEQUENCE_LEN);
-        i = appendHexDumpField(buf, i, TIMESTAMP_LEN);
-        i = appendHexDumpField(buf, i, RANDOM_LEN);
+        i = appendHexDumpField(buf, i, MACHINE_ID.length); // MAC 地址。
+        i = appendHexDumpField(buf, i, PROCESS_ID_LEN);// 进程 ID 。4 字节。
+        i = appendHexDumpField(buf, i, SEQUENCE_LEN);// 32 位数字，顺序增长。4 字节。
+        i = appendHexDumpField(buf, i, TIMESTAMP_LEN);// 时间戳。8 字节。
+        i = appendHexDumpField(buf, i, RANDOM_LEN);// 32 位数字，随机。4 字节。
         assert i == data.length;
         return buf.substring(0, buf.length() - 1);
     }
