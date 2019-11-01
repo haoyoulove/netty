@@ -70,6 +70,8 @@ public final class EchoServer {
              .handler(new LoggingHandler(LogLevel.INFO)) // 设置 NioServerSocketChannel 的处理器
              .childHandler(new ChannelInitializer<SocketChannel>() {
 
+                 //这是连接客户端的socketchannel的 初始化channle，服务端的ChannelInitializer不在这里
+                 //相当于每个连接过来的socketchannel都使用这个处理器
                  // 设置连入服务端的 Client 的 SocketChannel 的处理器
                  @Override
                  public void initChannel(SocketChannel ch) throws Exception {
